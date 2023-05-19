@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 
 public class Comment {
 
-    private Long comment_id;
+    private Long id;
     private String writer;
     private String content;
     private LocalDateTime createdDate;
-    private Long board_id;
+    private Long boardId;
 }

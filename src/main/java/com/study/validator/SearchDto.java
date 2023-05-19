@@ -31,4 +31,8 @@ public class SearchDto {
     public String getSearch() {
         return search;
     }
+
+    public boolean isNull() {
+        return startDate == null && endDate == null && category == null && search == null;
+    }
 }
