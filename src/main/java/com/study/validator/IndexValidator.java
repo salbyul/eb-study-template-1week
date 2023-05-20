@@ -5,7 +5,6 @@ import com.study.connection.ConnectionTest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.time.LocalDate;
 import java.util.ArrayList;
 
 // 날짜 검증 : 전 후 검증은 프론트에서만
@@ -28,24 +27,16 @@ public class IndexValidator {
      * @param date
      * @return
      */
-    private LocalDate validateDate(String date) {
-        if (date.equals("")) return null;
+    private String validateDate(String date) {
+        if (date == null) return null;
         String[] split = date.split("-");
 
         if (split.length != 3) return null;
 
-        int year, month, day;
-
-        try {
-            year = Integer.parseInt(split[0]);
-            month = Integer.parseInt(split[1]);
-            day = Integer.parseInt(split[2]);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-
-
-        return LocalDate.of(year, month, day);
+        if (Integer.parseInt(split[0]) < 0 || Integer.parseInt(split[0]) > 9999) return null;
+        if (Integer.parseInt(split[1]) < 1 || Integer.parseInt(split[1]) > 12) return null;
+        if (Integer.parseInt(split[2]) < 1 || Integer.parseInt(split[2]) > 31) return null;
+        return date;
     }
 
     /**
@@ -54,6 +45,7 @@ public class IndexValidator {
      * @return
      */
     private String validateCategory(String category) {
+        if (category == null) return null;
         ArrayList<String> categoryList = new ArrayList<>();
         String sql = "select name from category";
         try (PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -64,7 +56,6 @@ public class IndexValidator {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        if (category.equals("")) return null;
         boolean flag = false;
         for (String s : categoryList) {
             if (category.equals(s)) {
@@ -82,7 +73,7 @@ public class IndexValidator {
      * @return
      */
     private String validateSearch(String search) {
-        if (search.equals("")) return null;
+        if (search == null) return null;
         return search;
     }
 }

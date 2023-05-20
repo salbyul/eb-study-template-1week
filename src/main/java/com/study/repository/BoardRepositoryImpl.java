@@ -3,7 +3,9 @@ package com.study.repository;
 import com.study.connection.ConnectionTest;
 import com.study.dto.board.BoardCreateDto;
 import com.study.dto.board.BoardDetailDto;
+import com.study.dto.board.BoardModifyDto;
 import com.study.dto.board.BoardSearchDto;
+import com.study.validator.SearchDto;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -17,7 +19,6 @@ public class BoardRepositoryImpl implements BoardRepository {
     public BoardRepositoryImpl() throws Exception {
     }
 
-    //    TODO modified_date null로 바꾸기
     @Override
     public Long save(BoardCreateDto boardDto) {
         String sql = "insert into board (category_id, writer, password, title, content, views, created_date, modified_date) values((select category_id from category where name = ?), ?, ?, ?, ?, 0, ?, null)";
@@ -49,12 +50,19 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
-    public List<BoardSearchDto> findPaging(int offset, int limit) {
-        String sql = "select board_id, name as category, title, writer, views, created_date, modified_date \n" +
-                "from board b, category c\n" +
-                "where b.category_id = c.category_id\n" +
-                "order by created_date \n" +
+    public List<BoardSearchDto> findPaging(int offset, int limit, SearchDto searchDto) {
+        System.out.println(searchDto.getStartDate());
+        String sql = "select board_id, name as category, title, writer, views, created_date, modified_date " +
+                "from board b, category c " +
+                "where b.category_id = c.category_id ";
+        if (searchDto.getStartDate() != null) sql = sql + "and b.created_date >= '" + searchDto.getStartDate() + "' ";
+        if (searchDto.getEndDate() != null) sql = sql + "and b.created_date <= '" + searchDto.getEndDate() + " 23:59:59' ";
+        if (searchDto.getSearch() != null) sql = sql + "and (b.title like '%" + searchDto.getSearch() + "%' or b.writer like '%" + searchDto.getSearch() + "%' or b.content like '%" + searchDto.getSearch() + "%') ";
+        if (searchDto.getCategory() != null) sql = sql + "and c.name = '" + searchDto.getCategory() + "' ";
+
+        String orderBy = "order by created_date desc " +
                 "limit ? offset ?;";
+        sql += orderBy;
         List<BoardSearchDto> list = new ArrayList<>();
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -64,6 +72,7 @@ public class BoardRepositoryImpl implements BoardRepository {
 
             while (rs.next()) {
                 list.add(new BoardSearchDto(rs.getLong("board_id"), rs.getString("category"), rs.getString("title"), rs.getString("writer"), rs.getLong("views"), rs.getString("created_date"), rs.getString("modified_date")));
+                System.out.println("board_id = " + rs.getLong("board_id"));
             }
             pstmt.close();
             rs.close();
@@ -72,6 +81,29 @@ public class BoardRepositoryImpl implements BoardRepository {
         } finally {
         }
         return list;
+    }
+
+    @Override
+    public Integer findCountBySearchDto(SearchDto searchDto) {
+        int i = 0;
+        String sql = "select count(b.board_id) " +
+                "from board b, category c " +
+                "where b.category_id = c.category_id ";
+
+        if (searchDto.getStartDate() != null) sql = sql + "and b.created_date >= '" + searchDto.getStartDate() + "' ";
+        if (searchDto.getEndDate() != null) sql = sql + "and b.created_date <= '" + searchDto.getEndDate() + " 23:59:59' ";
+        if (searchDto.getSearch() != null) sql = sql + "and (b.title like '%" + searchDto.getSearch() + "%' or b.writer like '%" + searchDto.getSearch() + "%' or b.content like '%" + searchDto.getSearch() + "%') ";
+        if (searchDto.getCategory() != null) sql = sql + "and c.name = '" + searchDto.getCategory() + "' ";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)){
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return i;
     }
 
     @Override
@@ -125,6 +157,65 @@ public class BoardRepositoryImpl implements BoardRepository {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public String findPasswordById(Long boardId) {
+        String sql = "select password from board where board_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, boardId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("password");
+            }
+
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public void modifyBoard(BoardModifyDto boardModifyDto) {
+        String sql = "update board set writer = ?, title = ?, content = ?, modified_date = ? where board_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)){
+            pstmt.setString(1, boardModifyDto.getWriter());
+            pstmt.setString(2, boardModifyDto.getTitle());
+            pstmt.setString(3, boardModifyDto.getContent());
+            pstmt.setString(4, boardModifyDto.getModifiedDate().toString());
+            pstmt.setLong(5, boardModifyDto.getId());
+            int i = pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void delete(Long boardId) {
+        String sql = "delete from board where board_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)){
+            pstmt.setLong(1, boardId);
+            int i = pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public List<String> findCategories() {
+        String sql = "select name from category";
+        List<String> list = new ArrayList<>();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                list.add(rs.getString("name"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 
     public void close() throws SQLException {

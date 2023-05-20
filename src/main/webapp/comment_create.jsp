@@ -19,7 +19,7 @@
     } catch (Exception e) {
         e.printStackTrace();
     }
-    response.sendRedirect("detail.jsp?i=" + request.getParameter("i") + "&start_d=" + request.getParameter("start_d") + "&end_d=" + request.getParameter("end_d") + "&c=" + request.getParameter("c") + "&search=" + request.getParameter("search"));
+    response.sendRedirect("detail.jsp?i=" + request.getParameter("i"));
 %>
 <script type="text/javascript">
 

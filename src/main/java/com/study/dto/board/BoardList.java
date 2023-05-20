@@ -4,18 +4,15 @@ import java.util.List;
 
 public class BoardList {
 
-    private int count;
+    private PagingDto pagingDto;
     private List<BoardSearchDto> boardSearchDtoList;
 
-    public BoardList() {
+    public PagingDto getPagingDto() {
+        return pagingDto;
     }
 
-    public int getCount() {
-        return count;
-    }
-
-    public void setCount(int count) {
-        this.count = count;
+    public void setPagingDto(PagingDto pagingDto) {
+        this.pagingDto = pagingDto;
     }
 
     public List<BoardSearchDto> getBoardSearchDtoList() {

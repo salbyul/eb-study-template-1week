@@ -1,12 +1,7 @@
 <%@ page import="com.study.connection.ConnectionTest" %>
-<%@ page import="java.sql.Connection" %>
-<%@ page import="java.sql.PreparedStatement" %>
-<%@ page import="java.sql.ResultSet" %>
 <%@ page import="java.util.ArrayList" %>
-<%@ page import="com.study.validator.CreateValidator" %>
-<%@ page import="com.study.dto.board.BoardCreateDto" %>
 <%@ page import="com.study.repository.BoardRepositoryImpl" %>
-<%@ page import="com.study.repository.BoardRepository" %>
+<%@ page import="java.util.List" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
 <html>
@@ -17,17 +12,12 @@
 <body>
 
 <%
-    ConnectionTest conn = new ConnectionTest();
-    ArrayList<String> categoryList = new ArrayList<>();
+    List<String> categoryList = new ArrayList<>();
 
     try {
-        Connection c = conn.getConnection();
-        String sql = "select name from category";
-        PreparedStatement pstmt = c.prepareStatement(sql);
-        ResultSet rs = pstmt.executeQuery();
-        while (rs.next()) {
-            categoryList.add(rs.getString("name"));
-        }
+        BoardRepositoryImpl boardRepository = new BoardRepositoryImpl();
+        categoryList = boardRepository.findCategories();
+        boardRepository.close();
     } catch (Exception e) {
         e.printStackTrace();
     }

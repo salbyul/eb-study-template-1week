@@ -15,14 +15,10 @@
 <body>
 
 <%
-
-    Optional<String> startDate = Optional.ofNullable(request.getParameter("start_d"));
-    Optional<String> endDate = Optional.ofNullable(request.getParameter("end_d"));
-    Optional<String> category = Optional.ofNullable(request.getParameter("c"));
-    Optional<String> search = Optional.ofNullable(request.getParameter("search"));
-    Optional<String> optionalBtn = Optional.ofNullable(request.getParameter("btn"));
-
     String index = request.getParameter("i");
+    Optional<String> p = Optional.ofNullable(request.getParameter("p"));
+    String offset = p.orElse("0");
+
     BoardDetailDto detail = null;
     List<CommentDto> commentList = new ArrayList<>();
     try {
@@ -32,14 +28,15 @@
             response.sendRedirect("404.jsp");
         }
         boardRepository.updateViews(detail.getViews(), detail.getId());
-        boardRepository.close();
         CommentRepositoryImpl commentRepository = new CommentRepositoryImpl();
         commentList = commentRepository.findByBoardId(Long.valueOf(index));
+        boardRepository.close();
         commentRepository.close();
     } catch (Exception e) {
         e.printStackTrace();
     }
 %>
+
 
 <div class="w-7/12 mx-auto mt-20 h-screen">
     <%--  제목--%>
@@ -73,9 +70,7 @@
 
     <%--  내용--%>
     <div class="mb-3">
-        <div class="border pl-1">
-            <%=detail.getContent()%>
-        </div>
+        <div class="border pl-1 whitespace-pre-wrap"><%=detail.getContent()%></div>
         <%--    file--%>
         <div>
 
@@ -103,7 +98,7 @@
         </div>
         <div>
             <form method="post"
-                  action="comment_create.jsp?i=<%=index%>&start_d=<%=startDate.orElse("")%>&end_d=<%=endDate.orElse("")%>&c=<%=category.orElse("")%>&search=<%=search.orElse("")%>"
+                  action="comment_create.jsp?i=<%=index%>"
                   onsubmit="return verifyComment()">
                 <div>
                     <div>
@@ -124,7 +119,6 @@
     </div>
 </div>
 
-<%--TODO parameter에 따른 스타일 변경 --%>
 <div class="border fixed z-10 w-3/12 text-center top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 shadow-md bg-gray-50 invisible"
      id="modify_popup">
     <form method="post" action="modify_post.jsp?i=<%=request.getParameter("i")%>">
@@ -150,6 +144,28 @@
         </div>
     </form>
 </div>
+<%
+    Optional<String> optionalBtn = Optional.ofNullable(request.getParameter("btn"));
+    if (optionalBtn.isPresent()) {
+        String btn = optionalBtn.get();
+        if (btn.equals("modify")) {
+%>
+<script>
+    const modifyPopup = document.getElementById("modify_popup");
+    modifyPopup.style.visibility = 'visible';
+    alert("비밀번호가 틀렸습니다.")
+</script>
+<%
+} else if (btn.equals("delete")) { %>
+<script>
+    const deletePopup = document.getElementById("delete_popup");
+    deletePopup.style.visibility = 'visible';
+    alert("비밀번호가 틀렸습니다.");
+</script>
+<%
+        }
+    }
+%>
 
 <script type="text/javascript">
     const verifyComment = () => {
@@ -167,7 +183,7 @@
     }
 
     const toList = () => {
-        window.location.href = 'index.jsp?start_d=<%=startDate.orElse("")%>&end_d=<%=endDate.orElse("")%>&c=<%=category.orElse("")%>&search=<%=search.orElse("")%>'
+        window.location.href = 'index.jsp?p=<%=offset%>'
     }
 
     const changeVisibilityPopup = (btn) => {
